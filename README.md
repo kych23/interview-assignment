@@ -6,7 +6,7 @@ Welcome! This is a 48-hour take-home interview project for candidates applying t
 
 ## 🧠 Background
 
-At Spect AI, we work with 1000s of construction submittal PDFs submitted by contractors and subcontractors. These documents include technical product data for materials and equipment used in construction projects. As an intern, your first task will likely involve building a script that can extract structured information from these PDFs and generate a usable product database. 
+At Spect AI, we work with 1000s of construction submittal PDFs submitted by contractors and subcontractors. These documents include technical product data for materials and equipment used in construction projects. As an intern, your first task will likely involve building a script that can extract structured information from these PDFs and generate a usable product database.
 
 This take-home interview project is designed to simulate that work on a smaller scale.
 
@@ -33,6 +33,7 @@ In the `sample_output/` folder, you'll find example CSV files showing how the ou
 ## 🛠️ Setup Instructions
 
 1. Fork this repo to your GitHub account:
+
    - Click the "Fork" button in the top right of this repository
    - Clone your forked repo:
      ```bash
@@ -55,7 +56,8 @@ In the `sample_output/` folder, you'll find example CSV files showing how the ou
 1. Fork this repo or create your own GitHub repo with your solution.
 
 2. Make sure your repo includes:
-   - Your full working code 
+
+   - Your full working code
    - A `requirements.txt` file that contains all the packages you used so that we can run your code ourselves
    - Your CSV output files in a folder called /output
    - A short write-up (`WRITEUP.md`) with:
