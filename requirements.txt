@@ -1,9 +1,7 @@
 pymupdf4llm
 openai
-pydantic
 csv
 os
 json
 dotenv
 pathlib
-re

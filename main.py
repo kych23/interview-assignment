@@ -3,34 +3,43 @@
 from dotenv import load_dotenv
 import pymupdf4llm
 from openai import OpenAI
-from pydantic import BaseModel
 import os
 import json
 import csv
 from pathlib import Path
-import re 
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-STOPWORDS = {"submittal", "review", "approved", "office", "project", "date", "prepared by", 
-    "transmitted", "remarks", "submitted by", "engineer", "architect",
-    "contractor", "revision", "item number", "item description", "status", "address", "phone", "fax", "email", "website", "www.", "suite", "dr.", 
-    "st.", "road", "avenue", "drive", "p.o.", "street", "contact", "tel", "copyright", "reserved", "warning", "disclaimer", "liability", "responsibility", "relieve", "does not", "shall", "subject to change", "page", "sheet", "printed on", "cover sheet", "table of contents", "section", "notes", "drawing", "job", "unit tag", "order number", "comments", "description", "quantity", "qty", "submitted", "delivered via",
+STOPWORDS = {"submittal", "review", "approved", "office", "project", "date", 
+    "prepared by", "transmitted", "remarks", "submitted by", "engineer", 
+    "contractor", "revision", "item number", "item description", "status",
+    "address", "phone", "fax", "email", "website", "www.", "suite", "dr.", 
+    "st.", "road", "avenue", "drive", "p.o.", "street", "contact", "tel", 
+    "copyright", "reserved", "warning", "disclaimer", "liability", 
+    "responsibility", "relieve", "does not", "shall", "subject to change", 
+    "page", "sheet", "printed on", "cover sheet", "table of contents", 
+    "section", "notes", "drawing", "job", "unit tag", "order number", 
+    "comments", "description", "quantity", "qty", "submitted", "delivered via",
     "transmitted to", "transmitted by", "mstr", "pk", "disc", "code", 
-    "file", "location", "note:", "revision", "system service information"
+    "file", "location", "note:", "revision", "system service information", 
+    "architect"
 }
 
 def preprocess_text(text):
-    lines = text.splitlines()
-    cleaned = []
-    for line in lines:
-        line = line.strip().lower()
-        if not line or any(sw in line for sw in STOPWORDS):
-            continue
-        line = re.sub(r"\s{2,}", " ", line)
-        cleaned.append(line)
-    return "\n".join(cleaned)
+  """
+  Returns a preprocessed version of the raw page text to improve LLM extraction
+  by removing whitespace, dropping lines that contain a stopword, and 
+  normalizing to lowercase
+  """
+  lines = text.splitlines()
+  cleaned = []
+  for line in lines:
+      line = line.strip().lower()
+      if not line or any(sw in line for sw in STOPWORDS):
+          continue
+      cleaned.append(line)
+  return "\n".join(cleaned)
 
 def extract_text(filepath):
   """
@@ -60,7 +69,7 @@ def extract_properties(page_texts):
         "Your task is to extract **the most important product entries** and return them as a **JSON array**. "
         "Each entry must be an object with **exactly** the following keys:\n\n"
         "  • product_name   - The product's full model number or part number (if listed), and a full descriptive name\n"
-        "  • manufacturer   - The manufacturer's name. If it's not clearly listed near the product, infer it from surrounding context or headers. You must put a manufacturer, unknown is not an option\n"
+        "  • manufacturer   - The manufacturer's name. If it's not clearly listed near the product, infer it from surrounding context or headers. You must put a manufacturer\n"
         "  • pages          - A list of page numbers (integers) where the product appears. Include the current page number at minimum.\n\n"
         
         "Products may be listed in paragraph form or in tabular form (e.g., rows like `EGC5 - AL - ½\" Eggcrate Grid ...`). "
@@ -98,10 +107,10 @@ def extract_properties(page_texts):
           extractions.append(data)
           
   return extractions
-    
+
 def data_to_csv(csv_path, products):
     """
-    Write all products to one CSV. `pages` is serialized as JSON.
+    Write all products to one CSV.
     """
     fieldnames = ["product_name", "manufacturer", "pages"]
     unique_products = dedupe(products) 
@@ -114,25 +123,24 @@ def data_to_csv(csv_path, products):
                 "manufacturer": prod["manufacturer"],
                 "pages": json.dumps(prod.get("pages", []))
             })
-    
-          
-def dedupe(records: list[dict]) -> list[dict]:
+        
+def dedupe(records):
     """
     Combines rows that describe the same product and merge their page lists.
     """
     merged: dict[str, dict] = {}
     for rec in records:
-        key = re.sub(r"[^a-z0-9]", "", (rec["product_name"]).lower())
+        key = rec["product_name"].lower()
         if key not in merged:
             merged[key] = {**rec, "pages": set(rec["pages"])}
         else:
             merged[key]["pages"].update(rec["pages"])
-            if merged[key]["manufacturer"].lower() == "unknown" and \
-               rec["manufacturer"].lower() != "unknown":
+            if merged[key]["manufacturer"].lower() == "unknown" and rec["manufacturer"].lower() != "unknown":
                 merged[key]["manufacturer"] = rec["manufacturer"]
 
     for rec in merged.values():
         rec["pages"] = sorted(rec["pages"])
+  
     return list(merged.values())
   
 if __name__ == "__main__":
